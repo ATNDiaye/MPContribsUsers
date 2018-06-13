@@ -7,6 +7,7 @@ from scipy import where
 from decimal import Decimal
 from scipy.interpolate import interp1d, interp2d
 from pandas import to_numeric
+import pandas as pd
 from mpcontribs.users.utils import duplicate_check
 from mpcontribs.io.core.recdict import RecursiveDict
 from mpcontribs.io.archieml.mpfile import MPFile
@@ -45,8 +46,10 @@ def get_concentration_functions(composition_table_dict):
 @duplicate_check
 def run(mpfile, **kwargs):
 
+    print('getting started')
     input_file = mpfile.document['_hdata'].pop('input_file')
     zip_path = os.path.join(os.environ['HOME'], 'work', input_file)
+    print('Looking for '+zip_path)
     if not os.path.exists(zip_path):
         return 'Please upload', zip_path
     zip_file = ZipFile(zip_path, 'r')
@@ -54,12 +57,29 @@ def run(mpfile, **kwargs):
     composition_table_dict = mpfile.document['_hdata']['composition_table']
     conc_funcs = get_concentration_functions(composition_table_dict)
 
+    # Check for file with analyzed data
+    analysis_file = mpfile.document['_hdata'].pop('analysis_file')
+    analysis_path = os.path.join(os.environ['HOME'], 'work', analysis_file)
+    print('Looking for '+analysis_path)
+    if not os.path.exists(analysis_path):
+        analysis_df = None
+    else:
+        analysis_df = pd.read_csv(analysis_file, sep=',')
+        analysis_groups = analysis_df.groupby(['Y','Z'])
+
     for info in zip_file.infolist():
         print info.filename
         d = RecursiveDict()
 
         # positions.x/y from filename, <scan-id>_<meas-element>_<X>_<Y>.csv
-        element, x, y = os.path.splitext(info.filename)[0].rsplit('_', 4)
+        #element, x, y = os.path.splitext(info.filename)[0].rsplit('_', 4)
+
+# different filename for now
+        fn  = os.path.splitext(info.filename)[0]
+        element = fn.split('_')[0]
+        x,y = fn.split('(')[1].split(')')[0].split(',')
+        print x,y
+
         d['position'] = RecursiveDict(
             (k, clean_value(v, 'mm'))
             for k, v in zip(['x', 'y'], [x, y])
@@ -89,11 +109,22 @@ def run(mpfile, **kwargs):
 
         # min and max
         d.rec_update(RecursiveDict(
-            (y, RecursiveDict([
-                ('min', df[y].min()), ('max', df[y].max())
-            ])) for y in ['XAS', 'XMCD']
+            (l, RecursiveDict([
+                ('min', df[l].min()), ('max', df[l].max())
+            ])) for l in ['XAS', 'XMCD']
         ))
+        # Transfer Analysis data
+        if not (analysis_df is None):
+            analysis_slice = analysis_df.loc[((analysis_df['Y']==float(x)) &(analysis_df['Z']==float(y)))]
+            if len(analysis_slice.index)==1:
+                d.rec_update(RecursiveDict(
+                    (l, analysis_slice[l].values[0])  for l in analysis_slice.columns
+                ))
+            else:
+                print('Index has wrong length '+str(len(analysis_slice.index)))
 
         # add data to MPFile
         mpfile.add_hierarchical_data(nest_dict(d, ['data']), identifier=identifier)
         mpfile.add_data_table(identifier, df, name=element)
+
+

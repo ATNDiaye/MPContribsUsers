@@ -105,6 +105,10 @@ requirejs(['main'], function() {
                     }, {
                         method: 'restyle',
                         args: ['visible', [true, true, false, true, false, false, false]],
+                        label: 'tXMCD_Smooth_Max_XMCD_L3'
+                    },  {
+                        method: 'restyle',
+                        args: ['visible', [true, true, false, true, false, false, false]],
                         label: 'XAS Min'
                     }, {
                         method: 'restyle',
@@ -123,8 +127,7 @@ requirejs(['main'], function() {
             };
 
 
-            var avals = new Array(), bvals = new Array(), cvals = new Array(), cids = new Array(), 
-            xmcd_min = new Array(), xmcd_max = new Array(), xas_min = new Array(), xas_max = new Array()
+            var avals = new Array(), bvals = new Array(), cvals = new Array(), cids = new Array(), xmcd_min = new Array(), xmcd_max = new Array(), xas_min = new Array(), xas_max = new Array(), XMCD_Smooth_Max_XMCD_L3= new Array()
 
                 for (i = 0; i < table['rows'].length; i++) {
                     row = table['rows'][i];
@@ -132,6 +135,7 @@ requirejs(['main'], function() {
                         bvals.push(row['composition##Cu [%]'])
                         cvals.push(row['composition##Ce [%]'])
                         cids.push(row['cid'])
+                        XMCD_Smooth_Max_XMCD_L3.push(row['XMCD_Smooth_Max_XMCD_L3'])
                         xas_min.push(row['XAS##min'])
                         xas_max.push(row['XAS##max'])
                         xmcd_min.push(row['XMCD##min'])
@@ -146,7 +150,7 @@ requirejs(['main'], function() {
                 });
             };
 
-            var textAll = new Array(), textXASmin = new Array(), textXMCDmin = new Array(), textXASmax = new Array(), textXMCDmax = new Array(), textpP = new Array()
+            var textAll = new Array(), textXASmin = new Array(), textXMCDmin = new Array(), textXASmax = new Array(), textXMCDmax = new Array(), textpP = new Array(), textXMCD_Smooth_Max_XMCD_L3 = new Array()
 
                 var a = [0,0,100,0,66.667,0]
                 var b = [0,100,0,83.333,0, 66.667]
@@ -159,6 +163,7 @@ requirejs(['main'], function() {
 
             for (k = 0; k < avals.length; k++) {
                 textAll[k] = 'Co: '+'{0}'.format(avals[k])+'<br>Cu: '+'{0}'.format(bvals[k])+'<br>Ce: '+'{0}'.format(cvals[k])
+                    textXMCD_Smooth_Max_XMCD_L3[k] = 'Co: '+'{0}'.format(avals[k])+'<br>Cu: '+'{0}'.format(bvals[k])+'<br>Ce: '+'{0}'.format(cvals[k])+'<br>XMCD_Smooth_Max_XMCD_L3 = '+'{0}'.format(XMCD_Smooth_Max_XMCD_L3[k]) 
                     textXASmin[k] = 'Co: '+'{0}'.format(avals[k])+'<br>Cu: '+'{0}'.format(bvals[k])+'<br>Ce: '+'{0}'.format(cvals[k])+'<br>XASmin = '+'{0}'.format(xas_min[k]) 
                     textXASmax[k] = 'Co: '+'{0}'.format(avals[k])+'<br>Cu: '+'{0}'.format(bvals[k])+'<br>Ce: '+'{0}'.format(cvals[k])+'<br>XASmax = '+'{0}'.format(xas_max[k]) 
                     textXMCDmin[k] = 'Co: '+'{0}'.format(avals[k])+'<br>Cu: '+'{0}'.format(bvals[k])+'<br>Ce: '+'{0}'.format(cvals[k])+'<br>XMCDmin = '+'{0}'.format(xmcd_min[k]) 
@@ -233,6 +238,27 @@ requirejs(['main'], function() {
                 },
             };
 
+            var pltXMCD_Smooth_Max_XMCD_L3 = {
+                type: 'scatterternary',
+                mode: 'markers',
+                hoverinfo: 'text',
+                text: textXASmax,
+                a: avals,
+                b: bvals,
+                c: cvals,
+                name: 'XAS Max',
+                marker: {
+                    symbol: 0,
+                    color: XMCD_Smooth_Max_XMCD_L3,
+                    showscale: true,
+                    colorscale: 'Jet',
+                    size: 10,
+                    colorbar: {
+                        title: 'XMCD_Smooth_Max_XMCD_L3'
+                    }
+                },
+            };
+            
             var XAS_Max = {
                 type: 'scatterternary',
                 mode: 'markers',
@@ -297,7 +323,7 @@ requirejs(['main'], function() {
             };
 
 
-            var data = [phasePoints, phaseDiagram, All, XAS_Min, XAS_Max, XMCD_Min, XMCD_Max]
+            var data = [phasePoints, phaseDiagram, All, pltXMCD_Smooth_Max_XMCD_L3, XAS_Min, XAS_Max, XMCD_Min, XMCD_Max, pltXMCD_Smooth_Max_XMCD_L3]
 
                 Plotly.plot('graph1', data, layout)
 
